@@ -6,6 +6,7 @@ const userRoutes = require("./routes/users.routes");
 const authRoutes = require("./routes/auth.routes");
 const groupRoutes = require("./routes/group.routes");
 const expenseRoutes = require("./routes/expense.routes");
+const balanceRoutes = require("./routes/balance.routes");
 
 // On crée une instance d'application Express
 const app = express();
@@ -19,6 +20,7 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/groups", groupRoutes);
 app.use("/groups", expenseRoutes);
+app.use("/groups", balanceRoutes);
 
 // On exporte l'app pour pouvoir l'utiliser dans server.js
 module.exports = app;
