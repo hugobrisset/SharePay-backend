@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 const authenticateToken = require("../middlewares/auth.middleware");
-const { create } = require("../controllers/expense.controller");
+const { create, getAllExpenses } = require("../controllers/expense.controller");
 
-router.post("/:id/expenses", authenticateToken, create);
+router.post("/:id/create-expenses", authenticateToken, create);
+router.get("/group/:id", authenticateToken, getAllExpenses);
 
 module.exports = router;

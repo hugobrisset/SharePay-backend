@@ -34,4 +34,13 @@ const createExpense = async (groupId, userId, title, amount) => {
     return expense;
 }
 
-module.exports = { createExpense };
+const getGroupExpenses = async (groupId) => {
+    const result = await pool.query(
+        `SELECT * FROM expenses WHERE group_id = $1`,
+        [groupId]
+
+    )
+    return result.rows;
+}
+
+module.exports = { createExpense, getGroupExpenses };

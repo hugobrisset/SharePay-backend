@@ -29,7 +29,7 @@ const join = async (req, res) => {
 const getGroups = async (req, res) => {
     try{
         const userId = req.user.id;
-        const groups = await getUserGroup(userId);
+        const groups = await getUserGroups(userId);
         res.status(200).json(groups);
     } catch (error) {
         res.status(500).json({ error: error.message });
