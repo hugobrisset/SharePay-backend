@@ -5,7 +5,6 @@ const balance = async (req, res) => {
     try {
 
         const groupId = req.params.id;
-
         const result = await getBalance(groupId);
 
         res.status(200).json(result);

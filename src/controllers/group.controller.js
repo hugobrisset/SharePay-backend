@@ -1,27 +1,14 @@
-const { createGroup, joinGroup, getUserGroups, getGroupMembers, isGroupMember } = require("../services/group.service");
+const { createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGroupParticipants } = require("../services/group.service");
 
-const create = async (req, res) => {
+const createGroup = async (req, res) => {
     try{
-        const {name} = req.body;
-
         const userId = req.user.id;
+        const { name, participants } = req.body;
 
-        const group = await createGroup(name, userId);
+        const group = await createGroupService(name, userId, participants);
+
         res.status(201).json(group);
     } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-}
-
-const join = async (req, res) => {
-    try{
-        const userId = req.user.id;
-        const {groupId} = req.body;
-
-        const result = await joinGroup(userId, groupId);
-        res.status(201).json(result);
-
-    }catch (error) {
         res.status(500).json({ error: error.message });
     }
 }
@@ -57,4 +44,20 @@ const getMembers = async (req, res) => {
 
 }
 
-module.exports = { create, join, getGroups, getMembers};
+const getParticipants = async (req, res) => {
+
+    try {
+        const groupId = req.params.id;
+        const participants = await getGroupParticipants(groupId);
+
+        res.status(200).json(participants);
+
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+
+    }
+};
+
+module.exports = { createGroup, getGroups, getMembers, getParticipants};

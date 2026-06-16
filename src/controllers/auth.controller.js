@@ -1,6 +1,5 @@
 const { registerUser, loginUser } = require("../services/auth.service");
 
-/** POST /auth/register */
 const register = async (req, res) => {
 
     try {
@@ -20,7 +19,7 @@ const register = async (req, res) => {
     }
 };
 
-/** Login */
+
 const login = async (req, res) => {
     try{
         const {email, password} = req.body;

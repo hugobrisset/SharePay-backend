@@ -1,6 +1,24 @@
 const jwt = require("jsonwebtoken");
 
-/** Middleware JWT Vérifie si l'utilisateur est connecté */
+/**
+ * JWT Authentication Middleware
+ *
+ * This middleware verifies that the incoming request contains a valid JWT token.
+ *
+ * It performs the following checks:
+ * - Ensures the Authorization header exists
+ * - Extracts the token from the "Bearer <token>" format
+ * - Verifies the token signature and expiration using JWT secret
+ * - Attaches decoded user payload to req.user if valid
+ *
+ * If authentication fails, it returns an appropriate HTTP error response:
+ * - 401: Missing or malformed token
+ * - 403: Invalid or expired token
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers["authorization"];
 
@@ -12,7 +30,6 @@ const authenticateToken = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // format attendu : "Bearer TOKEN"
     if(!token) {
         return res.status(401).json({
             error: "Format token invalide"
