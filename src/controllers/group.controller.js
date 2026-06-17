@@ -60,4 +60,17 @@ const getParticipants = async (req, res) => {
     }
 };
 
-module.exports = { createGroup, getGroups, getMembers, getParticipants};
+const isMember = async (req, res) => {
+    try{
+        const userId = req.user.id;
+        const groupId = req.params.id;
+
+        const result = await isGroupMember(userId, groupId);
+        res.status(200).json(result);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { createGroup, getGroups, getMembers, getParticipants, isMember};

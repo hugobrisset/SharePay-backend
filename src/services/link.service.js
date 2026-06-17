@@ -24,7 +24,7 @@ const createInvite = async (groupId) => {
   return token;
 };
 
-const getInviteInfo = async (token) => {
+const getInviteInfo = async (token, userId) => {
 
     const inviteResult = await pool.query(
         `SELECT g.id, g.name FROM group_invites gi
@@ -45,10 +45,17 @@ const getInviteInfo = async (token) => {
         [group.id]
     );
 
+    const alreadyJoined = await pool.query(
+        `SELECT * FROM participants
+         WHERE user_id = $1 AND group_id = $2`,
+        [userId, group.id]
+    );
+
     return {
         groupId: group.id,
         groupName: group.name,
-        participants: participantsResult.rows
+        participants: participantsResult.rows,
+        alreadyJoined: alreadyJoined.rows.length > 0
     };
 };
 

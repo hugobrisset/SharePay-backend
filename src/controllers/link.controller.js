@@ -24,8 +24,9 @@ const generateInvite = async (req, res) => {
 const getInviteInfoController = async (req, res) => {
     try {
         const { token } = req.params;
+        const userId = req.user.id;
 
-        const result = await getInviteInfo(token);
+        const result = await getInviteInfo(token, userId);
 
         res.json(result);
 
