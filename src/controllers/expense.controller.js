@@ -5,9 +5,9 @@ const create = async (req, res) => {
 
         const groupId = req.params.id;
         const userId = req.user.id;
-        const {title, amount} = req.body;
+        const { title, amount, payerId, splits } = req.body;
 
-        const expense = await createExpense(groupId, userId, title, amount);
+        const expense = await createExpense(groupId, userId, title, amount, payerId, splits);
         res.status(201).json(expense);
 
     }  catch (error) {
