@@ -24,6 +24,35 @@ const createInvite = async (groupId) => {
   return token;
 };
 
+const getInviteInfo = async (token) => {
+
+    const inviteResult = await pool.query(
+        `SELECT g.id, g.name FROM group_invites gi
+        JOIN groups g ON g.id = gi.group_id
+        WHERE gi.token = $1`,
+        [token]
+    );
+
+    if (inviteResult.rows.length === 0) {
+        throw new Error("Invitation invalide");
+    }
+
+    const group = inviteResult.rows[0];
+
+    const participantsResult = await pool.query(
+        `SELECT id, name, user_id FROM participants
+        WHERE group_id = $1`,
+        [group.id]
+    );
+
+    return {
+        groupId: group.id,
+        groupName: group.name,
+        participants: participantsResult.rows
+    };
+};
+
+
 /**
  * Join a group using an invitation token.
  *
@@ -38,9 +67,11 @@ const createInvite = async (groupId) => {
  * @returns {Object} The group ID the user joined
  * @throws {Error} If token is invalid or user is already a member
  */
-const joinGroupByInvite = async (userId, token) => {
-  const inviteResult = await pool.query(
-        `SELECT * FROM group_invites WHERE token = $1`,
+const joinGroupByInvite = async (userId, token, participantId) => {
+
+    const inviteResult = await pool.query(
+        `SELECT group_id FROM group_invites
+        WHERE token = $1`,
         [token]
     );
 
@@ -50,22 +81,29 @@ const joinGroupByInvite = async (userId, token) => {
 
     const groupId = inviteResult.rows[0].group_id;
 
-    const alreadyMember = await pool.query(
-        `SELECT * FROM user_groups
-         WHERE user_id = $1 AND group_id = $2`,
-        [userId, groupId]
+    const participantResult = await pool.query(
+        `SELECT * FROM participants
+        WHERE id = $1`,
+        [participantId]
     );
 
-    if (alreadyMember.rows.length > 0) {
-        throw new Error("Déjà membre du groupe");
+    if (participantResult.rows.length === 0) {
+        throw new Error("Participant invalide");
+    }
+
+    const participant = participantResult.rows[0];
+
+    if (participant.user_id) {
+        throw new Error("Participant déjà associé");
     }
 
     await pool.query(
-        `INSERT INTO user_groups(user_id, group_id) VALUES ($1, $2)`,
-        [userId, groupId]
+        `UPDATE participants SET user_id = $1
+        WHERE id = $2 `,
+        [userId, participantId]
     );
 
     return {groupId};
-}
+};
 
-module.exports = {createInvite, joinGroupByInvite}
+module.exports = {createInvite, getInviteInfo, joinGroupByInvite}
