@@ -8,13 +8,42 @@ const createExpense = async (groupId, userId, title, amount, payerParticipantId,
     try{
         await client.query("BEGIN");
 
-        // security check
+        // check payer
         const isMember = await isGroupMember(userId, groupId);
         if (!isMember) {
             throw new Error("Accès refusé au groupe");
         }
+        
         if (!splits || splits.length === 0) {
             throw new Error("Splits manquants");
+        }
+
+        // check participants
+        const participantIds = splits.map(s => s.participantId);
+        const check = await client.query(
+            `SELECT id FROM participants 
+            WHERE group_id = $1 AND id = ANY($2::int[])`,
+            [groupId, participantIds]
+        );
+
+        if (check.rows.length !== participantIds.length) {
+            throw new Error("Splits invalides (participants hors groupe)");
+        }
+
+        // validate amounts + total
+        for (const split of splits) {
+            if (
+                typeof split.amount !== "number" || split.amount < 0 || !Number.isFinite(split.amount)
+            ) {
+                throw new Error("Montant invalide dans les splits");
+            }
+        }
+
+        const totalSplit = splits.reduce((sum, s) => sum + Number(s.amount), 0);
+
+        const diff = Math.abs(totalSplit - amount);
+        if (diff > 0.01) {
+            throw new Error("La somme des splits ne correspond pas au montant total");
         }
 
         // create expense
@@ -25,7 +54,7 @@ const createExpense = async (groupId, userId, title, amount, payerParticipantId,
         );
         const expense = expenseResult.rows[0];
 
-        // use splits
+        // insert splits
         for (const split of splits) {
             await client.query(
                 `INSERT INTO expense_participants
