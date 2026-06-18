@@ -1,4 +1,4 @@
-const { createExpense, getGroupExpenses } = require("../services/expense.service");
+const { createExpense, getGroupExpenses, getExpenseByID } = require("../services/expense.service");
 
 const create = async (req, res) => {
     try{
@@ -28,4 +28,18 @@ const getAllExpenses = async (req, res) => {
     }
 };
 
-module.exports = { create, getAllExpenses };
+const getExpense = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const expenseId = req.params.id;
+
+    const expense = await getExpenseByID(expenseId, userId);
+
+    res.json(expense);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { create, getAllExpenses, getExpense };

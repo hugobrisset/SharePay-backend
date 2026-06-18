@@ -93,4 +93,49 @@ const getGroupExpenses = async (groupId) => {
     return result.rows;
 }
 
-module.exports = { createExpense, getGroupExpenses };
+const getExpenseByID = async (expenseId, userId) => {
+    const client = await pool.connect();
+    try {
+        // get expense and check membership
+        const expenseResult = await client.query(
+            `SELECT e.*, g.id as group_id FROM expenses e
+            JOIN groups g ON g.id = e.group_id
+            WHERE e.id = $1`,
+            [expenseId]
+        );
+        if(expenseResult.rows.length == 0){
+            throw new Error("Expense introuvable");
+        }
+
+        const expense = expenseResult.rows[0];
+
+        const isMember = await isGroupMember(userId, expense.group_id);
+        if (!isMember) {
+            throw new Error("Accès refusé");
+        }
+
+        // payer info
+        const payerResult = await client.query(
+            `SELECT id, name FROM participants WHERE id = $1 `,
+            [expense.payer_participant_id]
+        );
+
+        // splits
+        const splitsResult = await client.query(
+        `SELECT ep.amount_owed, p.id, p.name FROM expense_participants ep
+        JOIN participants p ON p.id = ep.participant_id
+        WHERE ep.expense_id = $1 `,
+        [expenseId]
+        );
+        return {
+            ...expense,
+            payer: payerResult.rows[0],
+            splits: splitsResult.rows
+        };
+    
+    } finally {
+        client.release();
+    }
+}
+
+module.exports = { createExpense, getGroupExpenses, getExpenseByID };
