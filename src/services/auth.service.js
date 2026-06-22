@@ -17,8 +17,18 @@ const jwt = require("jsonwebtoken");
  * @returns {Object} The newly created user record
  */
 const registerUser = async (username, email, password) => {
-    const hashedPassword = await bcrypt.hash(password, 10);
     const normalizedEmail = email.toLowerCase();
+
+    // check existing user
+    const existingUser = await pool.query(
+        "SELECT id FROM users WHERE email = $1",
+        [normalizedEmail]
+    );
+    if (existingUser.rows.length > 0) {
+        throw new Error("EMAIL_ALREADY_EXISTS");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
         "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
@@ -26,6 +36,23 @@ const registerUser = async (username, email, password) => {
     );
 
     return result.rows[0];
+};
+
+const validateRegister = (username, email, password) => {
+    if (!username || username.length < 3) {
+        throw new Error("INVALID_USERNAME");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        throw new Error("INVALID_EMAIL");
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+    if (!password || !passwordRegex.test(password)) {
+        throw new Error("WEAK_PASSWORD");
+    }
 };
 
 /**
@@ -69,7 +96,7 @@ const loginUser = async (email, password) => {
             email: user.email
         },
         process.env.JWT_SECRET,
-        { expiresIn: "1h"}
+        { expiresIn: "1d"}
     );
 
     // Return safe user data + token
@@ -83,4 +110,4 @@ const loginUser = async (email, password) => {
     };
 };
 
-module.exports = {registerUser, loginUser};
+module.exports = {registerUser, loginUser, validateRegister};
