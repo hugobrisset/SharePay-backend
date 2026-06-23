@@ -21,17 +21,58 @@ const createGroupService = async (name, userId, participants) => {
     try{
         await client.query("BEGIN");
 
+        // CHECK USER EXISTS
+        const userResult = await client.query(
+            "SELECT id, username FROM users WHERE id = $1",
+            [userId]
+        );
+        if (userResult.rows.length === 0) {
+            throw new Error("User not found");
+        }
+
+        const username = userResult.rows[0].username;
+
+        // BUSINESS RULE VALIDATION
+        if (!Array.isArray(participants)) {
+            throw new Error("Participants must be an array");
+        }
+
+        if (participants.length === 0) {
+            throw new Error("At least one participant is required");
+        }
+
+        if (participants.length > 50) {
+            throw new Error("Too many participants (max 50)");
+        }
+
+        // Validate each participant strictly
+        for (const p of participants) {
+            if (typeof p !== "string") {
+                throw new Error("Each participant must be a string");
+            }
+
+            if (p.length === 0) {
+                throw new Error("Participant name cannot be empty");
+            }
+
+            if (p.length > 50) {
+                throw new Error("Participant name too long (max 50 chars)");
+            }
+        }
+
+        // Detect duplicates
+        const lower = participants.map(p => p.toLowerCase());
+        const hasDuplicates = new Set(lower).size !== lower.length;
+        if (hasDuplicates) {
+            throw new Error("Duplicate participants are not allowed");
+        }
+
+        // CREATE GROUP
         const groupResult = await client.query(
             "INSERT INTO groups (name) VALUES ($1) RETURNING *",
             [name]
         );
         const group = groupResult.rows[0];
-
-        const userResult = await client.query(
-            `SELECT username FROM users WHERE id = $1`,
-            [userId]
-        );
-        const username = userResult.rows[0].username;
 
         // Add creator as a participant (linked to user account)
         await client.query(
@@ -56,16 +97,13 @@ const createGroupService = async (name, userId, participants) => {
         return group;
 
     }catch (error) {
-        console.log("erreur catch");
         await client.query("ROLLBACK");
         throw error;
 
     } finally {
         client.release();
     }
-    
 
-     
 }
 
 /**

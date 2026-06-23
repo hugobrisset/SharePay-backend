@@ -3,8 +3,28 @@ const { createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGr
 const createGroup = async (req, res) => {
     try{
         const userId = req.user.id;
-        const { name, participants } = req.body;
 
+        // Ensure user is authenticated
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        let { name, participants } = req.body;
+
+        // Validate group name
+        if (!name || typeof name !== "string") {
+            return res.status(400).json({ error: "Group name is required" });
+        }
+
+        name = name.trim();
+
+        if (name.length < 2 || name.length > 50) {
+            return res.status(400).json({
+                error: "Group name must be between 2 and 50 characters"
+            });
+        }
+
+        // Call service
         const group = await createGroupService(name, userId, participants);
 
         res.status(201).json(group);
