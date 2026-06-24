@@ -7,6 +7,10 @@ const create = async (req, res) => {
         const userId = req.user.id;
         const { title, amount, payerId, splits } = req.body;
 
+        if (!title || typeof title !== "string") throw new Error("Title invalide");
+        if (!amount || typeof amount !== "number") throw new Error("Amount invalide");
+        if (!Array.isArray(splits)) throw new Error("Splits invalides");
+
         const expense = await createExpense(groupId, userId, title, amount, payerId, splits);
         res.status(201).json(expense);
 
