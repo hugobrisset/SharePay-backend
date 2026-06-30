@@ -5,7 +5,7 @@ const create = async (req, res) => {
 
         const groupId = req.params.id;
         const userId = req.user.id;
-        const { title, amount, payerParticipantId, splitMode, splits } = req.body;
+        const { title, amount, payerParticipantId, splitMode, splits, expenseDate} = req.body;
 
         
         if (!title || typeof title !== "string") throw new Error("Title invalide");
@@ -15,7 +15,7 @@ const create = async (req, res) => {
         const validModes = ["equal", "exact", "parts"];
         if (!validModes.includes(splitMode)) throw new Error("Split mode invalide");
 
-        const expense = await createExpense(groupId, userId, title, amount, payerParticipantId, splitMode, splits);
+        const expense = await createExpense(groupId, userId, title, amount, payerParticipantId, splitMode, splits, expenseDate);
         res.status(201).json(expense);
 
     }  catch (error) {
@@ -56,7 +56,7 @@ const update = async (req, res) => {
     const userId = req.user.id;
 
     console.log(req.body);
-    const { title, amount, payerParticipantId, splitMode, splits } = req.body;
+    const { title, amount, payerParticipantId, splitMode, splits, expenseDate } = req.body;
 
     console.log(payerParticipantId);
 
@@ -76,7 +76,8 @@ const update = async (req, res) => {
       amount,
       payerParticipantId,
       splitMode,
-      splits
+      splits,
+      expenseDate
     );
 
     res.json(expense);

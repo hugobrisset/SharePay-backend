@@ -2,11 +2,12 @@ const pool = require("../database/db");
 const { isGroupMember } = require("./group.service");
 
 
-const createExpense = async (groupId, userId, title, amount, payerParticipantId, splitMode, splits) => {
+const createExpense = async (groupId, userId, title, amount, payerParticipantId, splitMode, splits, expenseDate) => {
     const client = await pool.connect();
     try{
         await client.query("BEGIN");
 
+        console.log("expenseDate: ", expenseDate);
         // check payer
         const isMember = await isGroupMember(userId, groupId);
         if (!isMember) {
@@ -47,9 +48,9 @@ const createExpense = async (groupId, userId, title, amount, payerParticipantId,
 
         // create expense
         const expenseResult = await client.query(
-            `INSERT INTO expenses (group_id, payer_participant_id, title, amount, split_mode) VALUES ($1, $2, $3, $4, $5)
+            `INSERT INTO expenses (group_id, payer_participant_id, title, amount, split_mode, expense_date) VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING *`,
-            [groupId, payerParticipantId, title, amount, splitMode]
+            [groupId, payerParticipantId, title, amount, splitMode, expenseDate ?? new Date()]
         );
         const expense = expenseResult.rows[0];
 
@@ -147,6 +148,7 @@ const getExpenseByID = async (expenseId, userId) => {
             title: expense.title,
             amount: Number(expense.amount),
             splitMode: expense.split_mode,
+            expenseDate: expense.expense_date,
             payer,
             splits
         };
@@ -163,7 +165,8 @@ const updateExpense = async (
     amount,
     payerParticipantId,
     splitMode,
-    splits
+    splits,
+    expenseDate
 ) => {
 
     const client = await pool.connect();
@@ -224,14 +227,16 @@ const updateExpense = async (
              SET title = $1,
                  amount = $2,
                  payer_participant_id = $3,
-                 split_mode = $4
+                 split_mode = $4,
+                 expense_date = $6
              WHERE id = $5`,
             [
                 title,
                 amount,
                 payerParticipantId,
                 splitMode,
-                expenseId
+                expenseId,
+                expenseDate
             ]
         );
 
