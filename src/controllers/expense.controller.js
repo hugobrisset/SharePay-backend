@@ -1,17 +1,21 @@
-const { createExpense, getGroupExpenses, getExpenseByID } = require("../services/expense.service");
+const { createExpense, getGroupExpenses, getExpenseByID, updateExpense } = require("../services/expense.service");
 
 const create = async (req, res) => {
     try{
 
         const groupId = req.params.id;
         const userId = req.user.id;
-        const { title, amount, payerId, splits } = req.body;
+        const { title, amount, payerParticipantId, splitMode, splits } = req.body;
 
+        
         if (!title || typeof title !== "string") throw new Error("Title invalide");
         if (!amount || typeof amount !== "number") throw new Error("Amount invalide");
         if (!Array.isArray(splits)) throw new Error("Splits invalides");
 
-        const expense = await createExpense(groupId, userId, title, amount, payerId, splits);
+        const validModes = ["equal", "exact", "parts"];
+        if (!validModes.includes(splitMode)) throw new Error("Split mode invalide");
+
+        const expense = await createExpense(groupId, userId, title, amount, payerParticipantId, splitMode, splits);
         res.status(201).json(expense);
 
     }  catch (error) {
@@ -46,4 +50,40 @@ const getExpense = async (req, res) => {
   }
 };
 
-module.exports = { create, getAllExpenses, getExpense };
+const update = async (req, res) => {
+  try {
+    const expenseId = req.params.id;
+    const userId = req.user.id;
+
+    console.log(req.body);
+    const { title, amount, payerParticipantId, splitMode, splits } = req.body;
+
+    console.log(payerParticipantId);
+
+    if (!title || typeof title !== "string")
+      throw new Error("Title invalide");
+
+    if (!amount || typeof amount !== "number")
+      throw new Error("Amount invalide");
+
+    if (!Array.isArray(splits))
+      throw new Error("Splits invalides");
+
+    const expense = await updateExpense(
+      expenseId,
+      userId,
+      title,
+      amount,
+      payerParticipantId,
+      splitMode,
+      splits
+    );
+
+    res.json(expense);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { create, getAllExpenses, getExpense, update };
