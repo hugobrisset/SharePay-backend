@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middlewares/auth.middleware");
 
-const { createGroup, getGroups, getMembers, getParticipants, isMember } = require("../controllers/group.controller");
+const { createGroup, getGroups, getMembers, getParticipants, isMember, getParticipantId } = require("../controllers/group.controller");
 
 // Full URL: POST http://localhost:3000/groups/createGroup
 router.post("/createGroup",authenticateToken, createGroup);
@@ -15,5 +15,7 @@ router.get("/:id/participants", authenticateToken, getParticipants);
 
 // Full URL: GET http://localhost:3000/groups/:id/isMember
 router.get("/:id/isMember", authenticateToken, isMember);
+
+router.get("/:id/getParticipantId", authenticateToken, getParticipantId );
 
 module.exports = router;

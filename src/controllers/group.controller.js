@@ -1,4 +1,4 @@
-const { createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGroupParticipants } = require("../services/group.service");
+const { createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGroupParticipants, getParticipantIdService } = require("../services/group.service");
 
 const createGroup = async (req, res) => {
     try{
@@ -93,4 +93,18 @@ const isMember = async (req, res) => {
     }
 }
 
-module.exports = { createGroup, getGroups, getMembers, getParticipants, isMember};
+const getParticipantId = async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const userId = req.user.id;
+
+        const participantId = await getParticipantIdService(groupId, userId);
+
+        res.status(200).json({ participantId });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { createGroup, getGroups, getMembers, getParticipants, isMember, getParticipantId};

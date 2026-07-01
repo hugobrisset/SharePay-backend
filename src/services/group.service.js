@@ -193,7 +193,7 @@ const getGroupParticipants = async (groupId) => {
  * @returns {number} Participant ID
  * @throws {Error} If the user is not part of the group
  */
-const getParticipantId = async (userId, groupId) => {
+const getParticipantIdService = async (userId, groupId) => {
 
     const result = await pool.query(
         ` SELECT id FROM participants
@@ -208,4 +208,4 @@ const getParticipantId = async (userId, groupId) => {
     return result.rows[0].id;
 };
 
-module.exports = {createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGroupParticipants, getParticipantId};
+module.exports = {createGroupService, getUserGroups, getGroupMembers, isGroupMember, getGroupParticipants, getParticipantIdService};

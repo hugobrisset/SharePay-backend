@@ -1,20 +1,7 @@
 const pool = require("../database/db");
 
-/**
- * Calculate the financial balance of each participant in a group.
- *
- * This function computes how much each participant:
- * - Has paid in total
- * - Owes in total
- * - Their final balance (paid - owed)
- *
- * It aggregates data from expenses and expense participants,
- * then merges everything into a per-user balance summary.
- *
- * @param {number} groupId - The ID of the group to compute balances for
- * @returns {Array<Object>} List of participants with their computed balance
- */
-const getBalance = async (groupId) => {
+
+const getParticipantBalances  = async (groupId) => {
 
      /** Total amount paid by each participant  */
     const paidResult = await pool.query(
@@ -67,4 +54,66 @@ const getBalance = async (groupId) => {
     });
 };
 
-module.exports = { getBalance };
+const splitBalances = (balances) => {
+    const creditors = [];
+    const debtors = [];
+
+    for (const b of balances) {
+        if (b.balance > 0) {
+            creditors.push({ ...b });
+        } else if (b.balance < 0) {
+            debtors.push({ ...b, balance: Math.abs(b.balance) });
+        }
+    }
+
+    return { creditors, debtors };
+};
+
+const computeSettlements = (balances) => {
+    const { creditors, debtors } = splitBalances(balances);
+
+    const transactions = [];
+
+    let i = 0;
+    let j = 0;
+
+    while (i < debtors.length && j < creditors.length) {
+        const debtor = debtors[i];
+        const creditor = creditors[j];
+
+        const amount = Math.min(debtor.balance, creditor.balance);
+
+        transactions.push({
+            from: {
+                id: debtor.participantId,
+                name: debtor.name
+            },
+            to: {
+                id: creditor.participantId,
+                name: creditor.name
+            },
+            amount
+        });
+
+        debtor.balance -= amount;
+        creditor.balance -= amount;
+
+        if (debtor.balance === 0) i++;
+        if (creditor.balance === 0) j++;
+    }
+
+    return transactions;
+}
+
+const getFinancialSummary = async (groupId) => {
+
+    const balances = await getParticipantBalances(groupId);
+    const settlements = computeSettlements(balances);
+
+    return {
+        balances,
+        settlements
+    };
+};
+
+module.exports = { getFinancialSummary };
