@@ -9,12 +9,12 @@ const app = require("./app");
  * PORT DU SERVEUR
  * process.env.PORT → vient du fichier .env
  */
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 /**
  * LANCEMENT DU SERVEUR
  * On démarre l'API sur le port défini
  */
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT || 3000, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
 });
